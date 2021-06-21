@@ -45,6 +45,10 @@ client.on('guildCreate', guild => {
 	})
 })
 
+
+/**
+ * @param msg {Discord.Message}
+ */
 client.on('message', async msg => {
 	if (!msg.guild || !config.enabledGuilds.includes(msg.guild.id)) {
 		// activate when any message from owner is sent in guild
@@ -58,7 +62,7 @@ client.on('message', async msg => {
 		}
 		else return // no activity on inactive guilds
 	}
-	if (!config.enabledGuilds.includes(msg.channel.id)) return // limit to active channels
+	if (!config.enabledChannels.includes(msg.channel.id)) return // limit to active channels
 	if (msg.attachments.size > 0) {
 		res = await ocrSpace(msg.attachments.first().url, { language: 'pol', scale: 'true' })
 		var resmsg = res?.ParsedResults[0]?.ParsedText
@@ -83,7 +87,7 @@ client.on('interaction', async inter => {
 		case 'toggle-ocr':
 			inter.defer()
 
-			let newChannelID = inter.options?.[0]?.value || inter.channel.id
+			let newChannelID = inter.options.first()?.value || inter.channel.id
 			let ch = await client.channels.fetch(newChannelID)
 			if (!ch.isText()) return inter.editReply('Specified channel is not a text channel')
 
@@ -93,7 +97,7 @@ client.on('interaction', async inter => {
 				inter.editReply(`Enabled ocr in ${ch}`)
 			}
 			else {
-				config.enabledChannels.splice(index, 0)
+				config.enabledChannels.splice(index, 1)
 				inter.editReply(`Disabled ocr in ${ch}`)
 			}
 			fs.writeFileSync('./config.json', JSON.stringify(config, null, 4))

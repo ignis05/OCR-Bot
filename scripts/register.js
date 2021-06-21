@@ -1,8 +1,8 @@
-const auth = require('./token.json')
+const auth = require('../token.json')
 const Discord = require('discord.js')
 const { exit } = require('process')
 
-const interactions = require('./interactions.json')
+const interactions = require('../interactions.json')
 
 const intents = new Discord.Intents()
 const client = new Discord.Client({ intents })
@@ -24,7 +24,6 @@ client.once('ready', async () => {
 		await client.application.commands.create(interaction)
 	}
 	console.log('Global command list update completed')
-	exit(0)
 })
 
 client.on('error', console.error)
