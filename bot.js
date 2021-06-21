@@ -21,7 +21,7 @@ client.on('guildCreate', guild => {
 })
 
 client.on('message', async msg => {
-	if (msg.channel.id !== '467317385251258378') return // limit to one channel
+	if (msg.channel.id !== '851886311215988798') return // limit to one channel
 	if (msg.attachments.size > 0) {
 		res = await ocrSpace(msg.attachments.first().url, { language: 'pol', scale: 'true' })
 		var resmsg = res?.ParsedResults[0]?.ParsedText
