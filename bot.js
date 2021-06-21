@@ -85,20 +85,21 @@ client.on('interaction', async inter => {
 			break
 
 		case 'toggle-ocr':
-			inter.defer()
+			if (!inter.guild) return inter.reply({ content: `Bot cant be enabled in DMs`, ephemeral: true })
+			if (inter.user.id != botOwnerID && !inter.member.permissions.has(`MANAGE_CHANNELS`)) return inter.reply({ content: `You need MANAGE_CHANNELS permission to use this command`, ephemeral: true })
 
 			let newChannelID = inter.options.first()?.value || inter.channel.id
 			let ch = await client.channels.fetch(newChannelID)
-			if (!ch.isText()) return inter.editReply('Specified channel is not a text channel')
+			if (!ch.isText()) return inter.reply({ content: 'Specified channel is not a text channel', ephemeral: true })
 
 			let index = config.enabledChannels.indexOf(ch.id)
 			if (index == -1) {
 				config.enabledChannels.push(ch.id)
-				inter.editReply(`Enabled ocr in ${ch}`)
+				inter.reply(`Enabled ocr in ${ch}`)
 			}
 			else {
 				config.enabledChannels.splice(index, 1)
-				inter.editReply(`Disabled ocr in ${ch}`)
+				inter.reply(`Disabled ocr in ${ch}`)
 			}
 			fs.writeFileSync('./config.json', JSON.stringify(config, null, 4))
 	}
