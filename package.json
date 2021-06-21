@@ -13,7 +13,7 @@
 	"author": "\"Grzegorz Mikołajczyk\"",
 	"license": "ISC",
 	"dependencies": {
-		"discord.js": "^12.3.1",
+		"discord.js": "github:discordjs/discord.js",
 		"fs": "0.0.1-security",
 		"lodash": "^4.17.20",
 		"ocr-space-api-wrapper": "^1.0.5"
