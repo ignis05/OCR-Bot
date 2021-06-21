@@ -81,7 +81,7 @@ client.on('interaction', async inter => {
 	switch (inter.commandName) {
 		case 'ping':
 			console.log('pong!')
-			inter.reply(`Pong! (${Date.now() - inter.createdTimestamp}ms)`, { ephemeral: true })
+			inter.reply({ content: `Pong! (${Date.now() - inter.createdTimestamp}ms)`, ephemeral: true })
 			break
 
 		case 'toggle-ocr':
