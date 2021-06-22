@@ -86,6 +86,7 @@ client.on('interaction', async inter => {
 
 		case 'toggle-ocr':
 			if (!inter.guild) return inter.reply({ content: `Bot cant be enabled in DMs`, ephemeral: true })
+			if (!config.enabledGuilds.includes(inter.guild.id)) return inter.reply({ content: `Bot was not enabled on this guild`, ephemeral: true })
 			if (inter.user.id != botOwnerID && !inter.member.permissions.has(`MANAGE_CHANNELS`)) return inter.reply({ content: `You need MANAGE_CHANNELS permission to use this command`, ephemeral: true })
 
 			let newChannelID = inter.options.first()?.value || inter.channel.id
