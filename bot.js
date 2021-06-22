@@ -1,7 +1,8 @@
 const { exit } = require('process')
 const fs = require('fs')
 
-const ocrSpace = require('ocr-space-api-wrapper')
+// const ocrSpace = require('ocr-space-api-wrapper')
+const { recognize } = require('tesseract.js')
 
 const Discord = require('discord.js')
 const intents = new Discord.Intents(Discord.Intents.NON_PRIVILEGED)
@@ -64,8 +65,9 @@ client.on('message', async msg => {
 	}
 	if (!config.enabledChannels.includes(msg.channel.id)) return // limit to active channels
 	if (msg.attachments.size > 0) {
-		res = await ocrSpace(msg.attachments.first().url, { language: 'pol', scale: 'true' })
-		var resmsg = res?.ParsedResults[0]?.ParsedText
+		console.log('running ocr')
+		res = await recognize(msg.attachments.first().attachment, 'pol', { errorHandler: console.error })
+		var resmsg = res.data?.text
 		if (resmsg) msg.reply(`\`\`\`${resmsg}\`\`\``, { allowedMentions: { users: [] } })
 		else console.log('ocr failed')
 	}
