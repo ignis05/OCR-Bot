@@ -51,6 +51,7 @@ client.on('guildCreate', guild => {
  * @param msg {Discord.Message}
  */
 client.on('message', async msg => {
+	if(msg.author.bot) return
 	if (!msg.guild || !config.enabledGuilds.includes(msg.guild.id)) {
 		// activate when any message from owner is sent in guild
 		if (msg.author.id === botOwnerID) {
