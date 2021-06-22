@@ -65,7 +65,7 @@ client.on('message', async msg => {
 	}
 	if (!config.enabledChannels.includes(msg.channel.id)) return // limit to active channels
 	if (msg.attachments.size > 0) {
-		console.log('running ocr')
+		console.log(`running ocr in ${msg.channel.name}`)
 		res = await recognize(msg.attachments.first().attachment, 'pol', { errorHandler: console.error })
 		/**
 		* @type {String}
@@ -85,6 +85,7 @@ client.on('message', async msg => {
  */
 client.on('interaction', async inter => {
 	if (!inter.isCommand()) return
+	console.log(`Received interaction ${inter.commandName} from ${inter.user.tag}`)
 
 	switch (inter.commandName) {
 		case 'ping':
