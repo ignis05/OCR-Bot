@@ -103,6 +103,10 @@ client.on('interaction', async inter => {
 				inter.reply(`Disabled ocr in ${ch}`)
 			}
 			fs.writeFileSync('./config.json', JSON.stringify(config, null, 4))
+			break
+		case 'ocr-status':
+			inter.reply({ content: `OCR is ${config.enabledChannels.includes(inter.channel.id) ? "enabled" : "disabled"} in this channel`, ephemeral: true })
+			break
 	}
 })
 
