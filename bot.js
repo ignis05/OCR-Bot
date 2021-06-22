@@ -67,8 +67,14 @@ client.on('message', async msg => {
 	if (msg.attachments.size > 0) {
 		console.log('running ocr')
 		res = await recognize(msg.attachments.first().attachment, 'pol', { errorHandler: console.error })
+		/**
+		* @type {String}
+		**/
 		var resmsg = res.data?.text
-		if (resmsg) msg.reply(`\`\`\`${resmsg}\`\`\``, { allowedMentions: { users: [] } })
+		if (resmsg) {
+			if (resmsg.length > 1950) resmsg = resmsg.substring(0, 1950)
+			msg.reply(`\`\`\`${resmsg}\`\`\``, { allowedMentions: { users: [] } })
+		}
 		else console.log('ocr failed')
 	}
 
