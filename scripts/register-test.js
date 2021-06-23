@@ -5,7 +5,7 @@ const { exit } = require('process')
 const testGuildID = "467313439413501983"
 const interactions = require('../interactions.json')
 
-const intents = new Discord.Intents(Discord.Intents.NON_PRIVILEGED)
+const intents = new Discord.Intents()
 const client = new Discord.Client({ intents })
 
 client.once('ready', async () => {
