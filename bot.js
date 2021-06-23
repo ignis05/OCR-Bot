@@ -1,7 +1,6 @@
 const { exit } = require('process')
 const fs = require('fs')
 
-// const ocrSpace = require('ocr-space-api-wrapper')
 const { recognize } = require('tesseract.js')
 
 const Discord = require('discord.js')
