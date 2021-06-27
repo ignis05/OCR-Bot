@@ -37,7 +37,7 @@ try {
 client.on('ready', () => {
 	client.users.fetch(botOwnerID).then(owner => {
 		owner.send("Active and ready")
-	})
+	}).catch(err => console.error("failed to fetch bot owner - make sure that botOwnerID in config is correct and bot shares at least one server with the owner"))
 	console.log('Ready!')
 })
 
