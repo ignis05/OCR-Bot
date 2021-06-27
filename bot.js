@@ -7,11 +7,11 @@ const Discord = require('discord.js')
 const intents = new Discord.Intents(Discord.Intents.NON_PRIVILEGED)
 const client = new Discord.Client({ intents })
 
-const botOwnerID = '226032144856776704'
+var botOwnerID
 var token
 var config
 
-const configPlaceholder = { enabledGuilds: [], enabledChannels: [] }
+const configPlaceholder = { enabledGuilds: [], enabledChannels: [], botOwnerID: "id_here" }
 
 try {
 	token = require('./token.json').token
@@ -27,6 +27,7 @@ try {
 
 try {
 	config = require('./config.json')
+	botOwnerID = config.botOwnerID
 } catch (err) {
 	config = configPlaceholder
 	fs.writeFileSync('./config.json', JSON.stringify(configPlaceholder, null, 4))
@@ -50,7 +51,7 @@ client.on('guildCreate', guild => {
  * @param msg {Discord.Message}
  */
 client.on('message', async msg => {
-	if(msg.author.bot) return
+	if (msg.author.bot) return
 	if (!msg.guild || !config.enabledGuilds.includes(msg.guild.id)) {
 		// activate when any message from owner is sent in guild
 		if (msg.author.id === botOwnerID) {
