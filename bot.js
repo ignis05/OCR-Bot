@@ -14,6 +14,14 @@ var config
 const configPlaceholder = { enabledGuilds: [], enabledChannels: [], botOwnerID: "id_here" }
 
 try {
+	config = require('./config.json')
+	botOwnerID = config.botOwnerID
+} catch (err) {
+	config = configPlaceholder
+	fs.writeFileSync('./config.json', JSON.stringify(configPlaceholder, null, 4))
+}
+
+try {
 	token = require('./token.json').token
 	if (token == "bot_token_here") {
 		console.error(`./token.json is placehoder`)
@@ -25,13 +33,6 @@ try {
 	exit(0)
 }
 
-try {
-	config = require('./config.json')
-	botOwnerID = config.botOwnerID
-} catch (err) {
-	config = configPlaceholder
-	fs.writeFileSync('./config.json', JSON.stringify(configPlaceholder, null, 4))
-}
 
 client.on('ready', () => {
 	client.users.fetch(botOwnerID).then(owner => {
