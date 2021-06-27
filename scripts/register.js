@@ -24,6 +24,7 @@ client.once('ready', async () => {
 		await client.application.commands.create(interaction)
 	}
 	console.log('Global command list update completed')
+	exit(0)
 })
 
 client.on('error', console.error)
