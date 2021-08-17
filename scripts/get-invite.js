@@ -3,11 +3,6 @@ const { exit } = require('process')
 const fs = require('fs')
 
 try {
-	require('./data/config.json')
-} catch (err) {
-	fs.writeFileSync('./data/config.json', JSON.stringify({ enabledGuilds: [], enabledChannels: [] }, null, 2))
-}
-try {
 	var { token } = require('../data/token.json')
 	if (token == 'bot_token_here') {
 		console.error(`./data/token.json is placehoder`)
@@ -20,6 +15,11 @@ try {
 	fs.writeFileSync('./data/token.json', `{"token":"bot_token_here"}`)
 	console.error('Token not found: You need to paste bot token to ./data/token.json')
 	exit(0)
+}
+try {
+	require('./data/config.json')
+} catch (err) {
+	fs.writeFileSync('./data/config.json', JSON.stringify({ enabledGuilds: [], enabledChannels: [] }, null, 2))
 }
 
 const client = new Client({ intents: [] })
