@@ -24,6 +24,10 @@ module.exports = {
 
 		let index = config.enabledChannels.indexOf(ch.id)
 		if (index == -1) {
+			// permission check
+			if (!ch.permissionsFor(inter.guild.me).has('VIEW_CHANNEL')) return inter.reply('Missing **view channel** permission.')
+			if (!ch.permissionsFor(inter.guild.me).has('SEND_MESSAGES')) return inter.reply('Missing **send messages** permission.')
+			if (!ch.permissionsFor(inter.guild.me).has('READ_MESSAGE_HISTORY')) return inter.reply('Missing **read message history** permission.')
 			config.enabledChannels.push(ch.id)
 			inter.reply(`Enabled ocr in ${ch}`)
 		} else {

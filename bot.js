@@ -68,8 +68,11 @@ client.on('messageCreate', async (msg) => {
 		if (resmsg) {
 			if (resmsg.length > 1950) resmsg = resmsg.substring(0, 1950)
 			msg.reply({ content: `\`\`\`${resmsg}\`\`\``, allowedMentions: { repliedUser: false } }).catch((err) => {
-				console.log('failed to send reply')
-				console.log(err)
+				let errmsg = `Failed to reply to a message in channel #${msg.channel.name}:\n${err.code}: ${err.message}`
+				// DiscordAPIError: Missing Permissions
+				if (err.code === 50013) errmsg += '\nThis is most likely caused by missing **send messages** permission.'
+				client.application.owner.send(errmsg)
+				console.log(errmsg)
 			})
 		} else console.log('ocr failed')
 	}
