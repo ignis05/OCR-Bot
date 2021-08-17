@@ -1,31 +1,31 @@
-const auth = require('../token.json')
-const Discord = require('discord.js')
+const { REST } = require('@discordjs/rest')
+const { Routes } = require('discord-api-types/v9')
 const { exit } = require('process')
 
-const interactions = require('../interactions.json')
-
-const intents = new Discord.Intents()
-const client = new Discord.Client({ intents })
-
-client.once('ready', async () => {
-	console.log('Running global command list update')
-
-	let commands = await client.application.commands.fetch()
-
-	for (let cmd of commands.array()) {
-		if (!interactions.find(int => int.name == cmd.name)) {
-			console.log(`Found registered command ${cmd.name} with no matching interaction - removing it`)
-			await cmd.delete()
-		}
-	}
-
-	for (let interaction of interactions) {
-		console.log(`Registering command ${interaction.name}`)
-		await client.application.commands.create(interaction)
-	}
-	console.log('Global command list update completed')
+const commands = require('../commands')
+try {
+	var { token } = require('../data/token.json')
+	var { clientId } = require('../data/clientId.json')
+} catch (err) {
+	console.log(`Failed to get token or client id.
+  Make sure that the token in token.json is correct and that the bot can launch before running this script.`)
 	exit(0)
-})
+}
 
-client.on('error', console.error)
-client.login(auth.token)
+const interactions = Object.values(commands).map((cmd) => cmd.interaction)
+
+const rest = new REST({ version: '9' }).setToken(token)
+
+const run = async () => {
+	try {
+		console.log('Updating registered command list:')
+		console.log(interactions.map((i) => i.name).join('\n'))
+
+		await rest.put(Routes.applicationCommands(clientId), { body: interactions })
+
+		console.log('Successfully reloaded application commands.')
+	} catch (error) {
+		console.error(error)
+	}
+}
+run()

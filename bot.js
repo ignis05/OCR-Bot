@@ -4,121 +4,95 @@ const fs = require('fs')
 const { recognize } = require('tesseract.js')
 
 const Discord = require('discord.js')
-const intents = new Discord.Intents(Discord.Intents.NON_PRIVILEGED)
-const client = new Discord.Client({ intents })
+const client = new Discord.Client({ intents: [Discord.Intents.FLAGS.GUILD_MESSAGES, Discord.Intents.FLAGS.GUILDS] })
 
-var botOwnerID
-var token
-var config
-
-const configPlaceholder = { enabledGuilds: [], enabledChannels: [], botOwnerID: "id_here" }
-
+// #region config loading
+const configPlaceholder = { enabledGuilds: [], enabledChannels: [] }
 try {
-	config = require('./config.json')
-	botOwnerID = config.botOwnerID
+	var config = require('./data/config.json')
 } catch (err) {
 	config = configPlaceholder
-	fs.writeFileSync('./config.json', JSON.stringify(configPlaceholder, null, 4))
+	fs.writeFileSync('./data/config.json', JSON.stringify(configPlaceholder, null, 2))
 }
-
 try {
-	token = require('./token.json').token
-	if (token == "bot_token_here") {
-		console.error(`./token.json is placehoder`)
+	var { token } = require('./data/token.json')
+	if (token == 'bot_token_here') {
+		console.error(`./data/token.json is placehoder`)
 		exit(0)
 	}
 } catch (err) {
-	fs.writeFileSync('./token.json', `{"token":"bot_token_here"}`)
-	console.error('Auth not found: You need to paste bot auth to ./token.json')
+	if (!fs.existsSync('./data')) {
+		fs.mkdirSync('./data')
+	}
+	fs.writeFileSync('./data/token.json', `{"token":"bot_token_here"}`)
+	console.error('Token not found: You need to paste bot token to ./data/token.json')
 	exit(0)
 }
+// #endregion config loading
 
+const commands = require('./commands')
 
-client.on('ready', () => {
-	client.users.fetch(botOwnerID).then(owner => {
-		owner.send("Active and ready")
-	}).catch(err => console.error("failed to fetch bot owner - make sure that botOwnerID in config is correct and bot shares at least one server with the owner"))
+client.on('ready', async () => {
+	await client.application.fetch()
+	client.application.owner.send('Active and ready')
 	console.log('Ready!')
 })
 
-client.on('guildCreate', guild => {
-	client.users.fetch(botOwnerID).then(owner => {
-		owner.send(`${owner} - bot was just activated on a new guild: **${guild.name}**`)
-	})
+client.once('ready', () => {
+	// save client id for register script
+	fs.writeFileSync('./data/clientId.json', JSON.stringify({ clientId: client.user.id }))
 })
 
+client.on('guildCreate', (guild) => {
+	client.application.owner.send(`${client.application.owner} - bot just joined a new guild: **${guild.name}**`)
+})
 
-/**
- * @param msg {Discord.Message}
- */
-client.on('message', async msg => {
+/** @param {Discord.Message} msg */
+client.on('messageCreate', async (msg) => {
 	if (msg.author.bot) return
 	if (!msg.guild || !config.enabledGuilds.includes(msg.guild.id)) {
 		// activate when any message from owner is sent in guild
-		if (msg.author.id === botOwnerID) {
+		if (msg.author.id === client.application.owner.id) {
 			config.enabledGuilds.push(msg.guild.id)
-			console.log(`Bot activated in new guild **${msg.guild.name}**`)
-			fs.writeFileSync('./config.json', JSON.stringify(config, null, 4))
-			client.users.fetch(botOwnerID).then(owner => {
-				owner.send(`Bot activated in new guild **${msg.guild.name}**`)
-			})
-		}
-		else return // no activity on inactive guilds
+			console.log(`Bot activated in a new guild **${msg.guild.name}**`)
+			fs.writeFileSync('./data/config.json', JSON.stringify(config, null, 2))
+			client.application.owner.send(`Bot activated in a new guild **${msg.guild.name}**`)
+		} else return // no activity on inactive guilds
 	}
 	if (!config.enabledChannels.includes(msg.channel.id)) return // limit to active channels
 	if (msg.attachments.size > 0) {
-		console.log(`running ocr in ${msg.channel.name}`)
+		console.log(`running ocr in #${msg.channel.name}`)
 		res = await recognize(msg.attachments.first().attachment, 'pol', { errorHandler: console.error })
-		/**
-		* @type {String}
-		**/
+		/** @type {String} **/
 		var resmsg = res.data?.text
 		if (resmsg) {
 			if (resmsg.length > 1950) resmsg = resmsg.substring(0, 1950)
-			msg.reply(`\`\`\`${resmsg}\`\`\``, { allowedMentions: { users: [] } })
-		}
-		else console.log('ocr failed')
+			msg.reply({ content: `\`\`\`${resmsg}\`\`\``, allowedMentions: { repliedUser: false } }).catch((err) => {
+				console.log('failed to send reply')
+				console.log(err)
+			})
+		} else console.log('ocr failed')
 	}
-
 })
 
-/**
- * @param inter {Discord.CommandInteraction}
- */
-client.on('interaction', async inter => {
-	if (!inter.isCommand()) return
+/** @param {Discord.CommandInteraction} inter */
+client.on('interactionCreate', (inter) => {
+	if (!inter.isCommand() && !inter.isContextMenu()) return
 	console.log(`Received interaction ${inter.commandName} from ${inter.user.tag}`)
 
-	switch (inter.commandName) {
-		case 'ping':
-			console.log('pong!')
-			inter.reply({ content: `Pong! (${Date.now() - inter.createdTimestamp}ms)`, ephemeral: true })
-			break
-
-		case 'toggle-ocr':
-			if (!inter.guild) return inter.reply({ content: `Bot cant be enabled in DMs`, ephemeral: true })
-			if (!config.enabledGuilds.includes(inter.guild.id)) return inter.reply({ content: `Bot was not enabled on this guild`, ephemeral: true })
-			if (inter.user.id != botOwnerID && !inter.member.permissions.has(`MANAGE_CHANNELS`)) return inter.reply({ content: `You need MANAGE_CHANNELS permission to use this command`, ephemeral: true })
-
-			let newChannelID = inter.options.first()?.value || inter.channel.id
-			let ch = await client.channels.fetch(newChannelID)
-			if (!ch.isText()) return inter.reply({ content: 'Specified channel is not a text channel', ephemeral: true })
-
-			let index = config.enabledChannels.indexOf(ch.id)
-			if (index == -1) {
-				config.enabledChannels.push(ch.id)
-				inter.reply(`Enabled ocr in ${ch}`)
-			}
-			else {
-				config.enabledChannels.splice(index, 1)
-				inter.reply(`Disabled ocr in ${ch}`)
-			}
-			fs.writeFileSync('./config.json', JSON.stringify(config, null, 4))
-			break
-		case 'ocr-status':
-			inter.reply({ content: `OCR is ${config.enabledChannels.includes(inter.channel.id) ? "enabled" : "disabled"} in this channel`, ephemeral: true })
-			break
+	if (!inter.guild || !config.enabledGuilds.includes(inter.guildId)) {
+		// activate when any interaction from owner is sent in guild
+		if (inter.user.id === client.application.owner.id) {
+			config.enabledGuilds.push(inter.guild.id)
+			console.log(`Bot activated in a new guild **${inter.guild.name}**`)
+			fs.writeFileSync('./data/config.json', JSON.stringify(config, null, 2))
+			client.application.owner.send(`Bot activated in a new guild **${inter.guild.name}**`)
+		} else return inter.reply({ content: 'Bot was not activated on this guild.', ephemeral: true })
 	}
+
+	if (!commands[inter.commandName]) return console.error(`interaction ${inter.commandName} not recognized`)
+
+	commands[inter.commandName]?.handler(inter)
 })
 
 client.on('error', console.error)

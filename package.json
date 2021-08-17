@@ -8,12 +8,16 @@
 		"start": "pm2 start ecosystem.config.js",
 		"stop": "pm2 delete ecosystem.config.js",
 		"log": "pm2 log",
-		"monit": "pm2 monit"
+		"monit": "pm2 monit",
+		"register": "node scripts/register.js",
+		"get-invite": "node scripts/get-invite.js"
 	},
 	"author": "ignis05",
 	"license": "ISC",
 	"dependencies": {
-		"discord.js": "github:discordjs/discord.js",
+		"@discordjs/rest": "*",
+		"discord-api-types": "^0.22.0",
+		"discord.js": "^13.1.0",
 		"tesseract.js": "^2.1.4"
 	}
 }
