@@ -13,9 +13,9 @@ Discord.js bot that can be set to transcribe message attachments from specific d
 
 0. Make sure you have [nodejs](https://nodejs.org) version `^16.6.1` installed.
 
-1. Create discord bot in [developer panel](https://discord.com/developers/applications/) and copy it's token.
+1. Create discord bot in [developer panel](https://discord.com/developers/applications/) and copy its token.
 
-2. Download this repo and install dependencies with `npm i`
+2. Download this repository and install dependencies with `npm i`
 
 3. Launch bot with `node bot.js` to generate `data/token.json` - paste your bot token there.
 
