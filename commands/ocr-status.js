@@ -10,7 +10,7 @@ module.exports = {
 	/** @param {CommandInteraction} inter */
 	handler(inter) {
 		inter.reply({
-			content: `OCR is ${config.enabledChannels.includes(inter.channelId) ? 'enabled' : 'disabled'} in this channel`,
+			content: `Automatic OCR is ${config.enabledChannels.includes(inter.channelId) ? 'enabled' : 'disabled'} in this channel`,
 			ephemeral: true,
 		})
 	},

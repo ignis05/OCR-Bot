@@ -11,13 +11,13 @@ module.exports = {
 	/** @param {CommandInteraction} inter */
 	handler(inter) {
 		//  no dms
-		if (!inter.guild) return inter.reply({ content: `Bot cant be enabled in DMs`, ephemeral: true })
+		if (!inter.guild) return inter.reply({ content: `Bot can't be enabled in DMs`, ephemeral: true })
 		// enabled guilds only
 		if (!config.enabledGuilds.includes(inter.guild.id))
 			return inter.reply({ content: `Bot was not enabled on this guild`, ephemeral: true })
 		// members with "manage channels"
 		if (inter.user.id != inter.client.application.owner.id && !inter.member.permissions.has(`MANAGE_CHANNELS`))
-			return inter.reply({ content: `You need MANAGE_CHANNELS permission to use this command`, ephemeral: true })
+			return inter.reply({ content: `You need **manage channels** permission to use this command`, ephemeral: true })
 
 		let ch = inter.channel
 		if (!ch.isText()) return inter.reply({ content: 'Specified channel is not a text channel', ephemeral: true })
