@@ -1,5 +1,6 @@
 /** @typedef {import("discord.js").ContextMenuInteraction} ContextMenuInteraction */
-const { recognize } = require('tesseract.js')
+/** @typedef {import("../modules/ocr").multiOcrRes} multiOcrRes */
+const multiOcr = require('../modules/ocr')
 
 module.exports = {
 	interaction: {
@@ -10,23 +11,23 @@ module.exports = {
 	async handler(inter) {
 		let msg = inter.options.getMessage('message')
 
-		if (msg.attachments.size > 0) {
+		if (msg.attachments.size > 0 && (msg.attachments.first().name.endsWith('png') || msg.attachments.first().name.endsWith('jpg'))) {
 			await inter.deferReply()
 
 			console.log(`running ocr in #${msg.channel.name}`)
 
-			res = await recognize(msg.attachments.first().attachment, 'pol', { errorHandler: console.error })
-
 			let limit = 1950 - msg.url.length
-			/** @type {String} **/
-			var resmsg = res.data?.text
-			if (resmsg) {
-				// trim message if its too long
-				if (resmsg.length > limit) resmsg = resmsg.substring(0, limit)
-				inter.editReply(`[link](${msg.url})\n\`\`\`${resmsg}\`\`\``)
+			/** @type {multiOcrRes} **/
+			var res = await multiOcr(msg.attachments.first())
+			if (res.success) {
+				let resMsg = res.text
+				if (!resMsg) return inter.reply({ content: `No text found`, ephemeral: true })
+				// trim message if it's too long
+				if (resMsg.length > limit) resMsg = resMsg.substring(0, limit)
+				inter.editReply(`[link](${msg.url})\n\`\`\`${resMsg}\`\`\``)
 			} else {
 				inter.editReply(`Ocr failed.`)
 			}
-		} else inter.reply({ content: `This message has no attachments.`, ephemeral: true })
+		} else inter.reply({ content: `This message has no png/jpg attachments.`, ephemeral: true })
 	},
 }

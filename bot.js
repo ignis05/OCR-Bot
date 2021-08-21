@@ -1,10 +1,12 @@
 const { exit } = require('process')
 const fs = require('fs')
 
-const { recognize } = require('tesseract.js')
-
 const Discord = require('discord.js')
 const client = new Discord.Client({ intents: [Discord.Intents.FLAGS.GUILD_MESSAGES, Discord.Intents.FLAGS.GUILDS] })
+
+/** @typedef {import("./modules/ocr").multiOcrRes} multiOcrRes */
+const multiOcr = require('./modules/ocr')
+const activationGuard = require('./modules/activationGuard')
 
 // #region config loading
 const configPlaceholder = { enabledGuilds: [], enabledChannels: [] }
@@ -50,31 +52,24 @@ client.on('guildCreate', (guild) => {
 /** @param {Discord.Message} msg */
 client.on('messageCreate', async (msg) => {
 	if (msg.author.bot) return
-	if (!msg.guild || !config.enabledGuilds.includes(msg.guild.id)) {
-		// activate when any message from owner is sent in guild
-		if (msg.author.id === client.application.owner.id) {
-			config.enabledGuilds.push(msg.guild.id)
-			console.log(`Bot activated in a new guild **${msg.guild.name}**`)
-			fs.writeFileSync('./data/config.json', JSON.stringify(config, null, 2))
-			client.application.owner.send(`Bot activated in a new guild **${msg.guild.name}**`)
-		} else return // no activity on inactive guilds
-	}
+	if (!msg.guild) return // no dms
+	if (activationGuard(msg, config)) return // guild not enabled
 	if (!config.enabledChannels.includes(msg.channel.id)) return // limit to active channels
-	if (msg.attachments.size > 0) {
+	if (msg.attachments.size > 0 && (msg.attachments.first().name.endsWith('png') || msg.attachments.first().name.endsWith('jpg'))) {
 		console.log(`running ocr in #${msg.channel.name}`)
-		res = await recognize(msg.attachments.first().attachment, 'pol', { errorHandler: console.error })
-		/** @type {String} **/
-		var resmsg = res.data?.text
-		if (resmsg) {
-			if (resmsg.length > 1950) resmsg = resmsg.substring(0, 1950)
-			msg.reply({ content: `\`\`\`${resmsg}\`\`\``, allowedMentions: { repliedUser: false } }).catch((err) => {
+		/** @type {multiOcrRes} **/
+		var res = await multiOcr(msg.attachments.first())
+		var resMsg = res.text
+		if (resMsg) {
+			if (resMsg.length > 1950) resMsg = resMsg.substring(0, 1950)
+			msg.reply({ content: `\`\`\`${resMsg}\`\`\``, allowedMentions: { repliedUser: false } }).catch((err) => {
 				let errmsg = `Failed to reply to a message in channel #${msg.channel.name}:\n${err.code}: ${err.message}`
 				// DiscordAPIError: Missing Permissions
 				if (err.code === 50013) errmsg += '\nThis is most likely caused by missing **send messages** permission.'
 				client.application.owner.send(errmsg)
 				console.log(errmsg)
 			})
-		} else console.log('ocr failed')
+		} else console.log('ocr failed or empty')
 	}
 })
 
@@ -82,16 +77,8 @@ client.on('messageCreate', async (msg) => {
 client.on('interactionCreate', (inter) => {
 	if (!inter.isCommand() && !inter.isContextMenu()) return
 	console.log(`Received interaction ${inter.commandName} from ${inter.user.tag}`)
-
-	if (!inter.guild || !config.enabledGuilds.includes(inter.guildId)) {
-		// activate when any interaction from owner is sent in guild
-		if (inter.user.id === client.application.owner.id) {
-			config.enabledGuilds.push(inter.guild.id)
-			console.log(`Bot activated in a new guild **${inter.guild.name}**`)
-			fs.writeFileSync('./data/config.json', JSON.stringify(config, null, 2))
-			client.application.owner.send(`Bot activated in a new guild **${inter.guild.name}**`)
-		} else return inter.reply({ content: 'Bot was not activated on this guild.', ephemeral: true })
-	}
+	if (!inter.guild) return inter.reply({ content: "Bot doesn't work in DMs", ephemeral: true })
+	if (activationGuard(inter, config)) return inter.reply({ content: 'Bot was not activated on this guild.', ephemeral: true })
 
 	if (!commands[inter.commandName]) return console.error(`interaction ${inter.commandName} not recognized`)
 
