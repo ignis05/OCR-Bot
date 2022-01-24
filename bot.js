@@ -13,6 +13,7 @@ const configPlaceholder = { enabledGuilds: [], enabledChannels: [] }
 try {
 	var config = require('./data/config.json')
 } catch (err) {
+	if (!fs.existsSync('./data')) fs.mkdirSync('./data')
 	config = configPlaceholder
 	fs.writeFileSync('./data/config.json', JSON.stringify(configPlaceholder, null, 2))
 }
@@ -23,9 +24,7 @@ try {
 		exit(0)
 	}
 } catch (err) {
-	if (!fs.existsSync('./data')) {
-		fs.mkdirSync('./data')
-	}
+	if (!fs.existsSync('./data')) fs.mkdirSync('./data')
 	fs.writeFileSync('./data/token.json', `{"token":"bot_token_here"}`)
 	console.error('Token not found: You need to paste bot token to ./data/token.json')
 	exit(0)
