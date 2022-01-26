@@ -83,7 +83,10 @@ module.exports = function multiOcr(attachment) {
 				if (err == 'api call limit reached') {
 					console.log('api call limit reached')
 					useOcrSpaceApi = false
-					setTimeout(() => (useOcrSpaceApi = true), 180000) // 3 min
+					setTimeout(() => {
+						useOcrSpaceApi = true
+						console.log('internal api timeout finished')
+					}, 180000) // 3 min
 				}
 			}
 		}
