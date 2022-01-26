@@ -88,13 +88,13 @@ module.exports = function multiOcr(attachment) {
 			}
 		}
 		if (ocrSpaceRes !== undefined) {
-			console.log('ocr.space api call succesful')
+			console.log('ocr.space api call successful')
 			return resolve({ success: true, text: ocrSpaceRes })
 		}
 
 		tesseractOcr(attachment.attachment)
 			.then((res) => {
-				console.log('tesseract ocr succesfull')
+				console.log('tesseract ocr successful')
 				resolve({ success: true, text: res })
 			})
 			.catch(() => {
