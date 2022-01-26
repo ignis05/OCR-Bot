@@ -21,13 +21,13 @@ module.exports = {
 			var res = await multiOcr(msg.attachments.first())
 			if (res.success) {
 				let resMsg = res.text
-				if (!resMsg) return inter.reply({ content: `No text found`, ephemeral: true })
+				if (!resMsg) return inter.editReply({ content: `No text found` })
 				// trim message if it's too long
 				if (resMsg.length > limit) resMsg = resMsg.substring(0, limit)
 				inter.editReply(`[link](${msg.url})\n\`\`\`${resMsg}\`\`\``)
 			} else {
 				inter.editReply(`Ocr failed.`)
 			}
-		} else inter.reply({ content: `This message has no png/jpg attachments.`, ephemeral: true })
+		} else inter.editReply({ content: `This message has no png/jpg attachments.` })
 	},
 }
