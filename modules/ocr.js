@@ -35,16 +35,8 @@ function ocrSpaceApi(url) {
 				else reject('no text')
 			})
 			.catch((err) => {
-				if (
-					err.response?.status === 403 &&
-					err.response?.data == 'You may only perform this action upto maximum 10 number of times within 600 seconds'
-				) {
-					// console.log('api call limit reached')
-					reject('api call limit reached')
-				} else {
-					console.error(err)
-					reject('error')
-				}
+				console.log(err.response?.data)
+				reject('api call failed')
 			})
 	})
 }
@@ -80,8 +72,8 @@ module.exports = function multiOcr(attachment) {
 			try {
 				var ocrSpaceRes = await ocrSpaceApi(attachment.url)
 			} catch (err) {
-				if (err == 'api call limit reached') {
-					console.log('api call limit reached')
+				if (err == 'api call failed') {
+					console.log('api call failed')
 					useOcrSpaceApi = false
 					setTimeout(() => {
 						useOcrSpaceApi = true
