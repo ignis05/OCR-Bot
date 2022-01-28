@@ -54,21 +54,30 @@ client.on('messageCreate', async (msg) => {
 	if (!msg.guild) return // no dms
 	if (activationGuard(msg, config)) return // guild not enabled
 	if (!config.enabledChannels.includes(msg.channel.id)) return // limit to active channels
-	if (msg.attachments.size > 0 && (msg.attachments.first().name.endsWith('png') || msg.attachments.first().name.endsWith('jpg'))) {
+
+	for (let attachment of msg.attachments.values()) {
+		if (!/\.(png|jpg)$/i.test(attachment.name)) continue // not an image
+
 		console.log(`running ocr in #${msg.channel.name}`)
+
 		/** @type {multiOcrRes} **/
-		var res = await multiOcr(msg.attachments.first())
+		var res = await multiOcr(attachment)
+
 		var resMsg = res.text
-		if (resMsg) {
-			if (resMsg.length > 1950) resMsg = resMsg.substring(0, 1950)
-			msg.reply({ content: `\`\`\`${resMsg}\`\`\``, allowedMentions: { repliedUser: false } }).catch((err) => {
-				let errmsg = `Failed to reply to a message in channel #${msg.channel.name}:\n${err.code}: ${err.message}`
-				// DiscordAPIError: Missing Permissions
-				if (err.code === 50013) errmsg += '\nThis is most likely caused by missing **send messages** permission.'
-				client.application.owner.send(errmsg)
-				console.log(errmsg)
-			})
-		} else console.log('ocr failed or empty')
+		if (!resMsg) {
+			console.log('ocr failed or empty')
+			continue
+		}
+		// trim length
+		if (resMsg.length > 1950) resMsg = resMsg.substring(0, 1950)
+
+		msg.reply({ content: `\`\`\`\n${resMsg}\`\`\``, allowedMentions: { repliedUser: false } }).catch((err) => {
+			let errmsg = `Failed to reply to a message in channel #${msg.channel.name}:\n${err.code}: ${err.message}`
+			// DiscordAPIError: Missing Permissions
+			if (err.code === 50013) errmsg += '\nThis is most likely caused by missing **send messages** permission.'
+			client.application.owner.send(errmsg)
+			console.log(errmsg)
+		})
 	}
 })
 
