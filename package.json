@@ -1,11 +1,11 @@
 {
 	"name": "ocr-bot",
 	"version": "1.0.0",
-	"description": "\"ocr - discord bot\"",
+	"description": "ocr - discord bot for image transciption",
 	"main": "bot.js",
 	"repository": "github.com/ignis05/OCR-Bot",
 	"scripts": {
-		"start": "pm2 start ecosystem.config.js",
+		"start": "pm2 reload ecosystem.config.js",
 		"stop": "pm2 delete ecosystem.config.js",
 		"log": "pm2 log",
 		"monit": "pm2 monit",
