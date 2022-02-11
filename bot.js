@@ -48,13 +48,7 @@ client.on('guildCreate', (guild) => {
 	client.application.owner.send(`${client.application.owner} - bot just joined a new guild: **${guild.name}**`)
 })
 
-function failedMessageReplyHandler(err) {
-	let errmsg = `Failed to reply to a message in channel #${msg.channel.name}:\n${err.code}: ${err.message}`
-	// DiscordAPIError: Missing Permissions
-	if (err.code === 50013) errmsg += '\nThis is most likely caused by missing **send messages** permission.'
-	client.application.owner.send(errmsg)
-	console.log(errmsg)
-}
+const allowedMentions = { repliedUser: false }
 
 /** @param {Discord.Message} msg */
 client.on('messageCreate', async (msg) => {
@@ -68,23 +62,30 @@ client.on('messageCreate', async (msg) => {
 
 		console.log(`running ocr in #${msg.channel.name}`)
 
-		let reply = await msg
-			.reply({ content: `[ processing image ]`, allowedMentions: { repliedUser: false } })
-			.catch(failedMessageReplyHandler)
+		let reply = await msg.reply({ content: `[ processing image ]`, allowedMentions }).catch((err) => {
+			let errmsg = `Failed to reply to a message in channel #${msg.channel.name}:\n${err.code}: ${err.message}`
+			// DiscordAPIError: Missing Permissions
+			if (err.code === 50013) errmsg += '\nThis is most likely caused by missing **send messages** permission.'
+			client.application.owner.send(errmsg)
+			console.log(errmsg)
+		})
 
 		/** @type {multiOcrRes} **/
-		var res = await multiOcr(attachment)
+		let { success, text } = await multiOcr(attachment)
 
-		var resMsg = res.text
-		if (!resMsg) {
-			console.log('ocr empty')
-			reply.edit({ content: `[ no text found ]`, allowedMentions: { repliedUser: false } })
+		if (!success) {
+			reply.edit({ content: `[ ocr failed ]`, allowedMentions })
+			continue
+		}
+
+		if (!text) {
+			reply.edit({ content: `[ no text found ]`, allowedMentions })
 			continue
 		}
 		// trim length
-		if (resMsg.length > 1950) resMsg = resMsg.substring(0, 1950)
+		if (text.length > 1950) text = text.substring(0, 1950)
 
-		reply.edit({ content: `\`\`\`\n${resMsg}\`\`\``, allowedMentions: { repliedUser: false } })
+		reply.edit({ content: `\`\`\`\n${text}\`\`\``, allowedMentions })
 	}
 })
 
