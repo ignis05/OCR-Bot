@@ -5,9 +5,6 @@ const { recognize } = require('tesseract.js')
 
 /** @typedef {import("discord.js").MessageAttachment} MessageAttachment */
 
-// after call limit is reached this changes to false for 10 minutes to not waste time waiting for api calls that will fail
-var useOcrSpaceApi = true
-
 /**
  * Transcribes image using ocr.space api call
  * @param {string} url url of image
@@ -35,7 +32,7 @@ function ocrSpaceApi(url) {
 				else reject('no text')
 			})
 			.catch((err) => {
-				console.log(err.response?.data)
+				// console.log(err.response?.data)
 				reject('api call failed')
 			})
 	})
@@ -68,32 +65,14 @@ function tesseractOcr(attachment) {
  */
 module.exports = function multiOcr(attachment) {
 	return new Promise(async (resolve) => {
-		if (useOcrSpaceApi) {
-			try {
-				var ocrSpaceRes = await ocrSpaceApi(attachment.url)
-			} catch (err) {
-				if (err == 'api call failed') {
-					console.log('api call failed')
-					useOcrSpaceApi = false
-					setTimeout(() => {
-						useOcrSpaceApi = true
-						console.log('internal api timeout finished')
-					}, 180000) // 3 min
-				}
-			}
-		}
-		if (ocrSpaceRes !== undefined) {
-			console.log('ocr.space api call successful')
-			return resolve({ success: true, text: ocrSpaceRes })
-		}
+		var ocrSpaceRes = ocrSpaceApi(attachment.url)
+		var tesseractRes = tesseractOcr(attachment.attachment)
 
-		tesseractOcr(attachment.attachment)
-			.then((res) => {
-				console.log('tesseract ocr successful')
-				resolve({ success: true, text: res })
-			})
-			.catch(() => {
-				resolve({ success: false })
-			})
+		try {
+			var result = await Promise.any([ocrSpaceRes, tesseractRes])
+			resolve({ success: true, text: result })
+		} catch (err) {
+			resolve({ success: false })
+		}
 	})
 }

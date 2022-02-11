@@ -48,6 +48,14 @@ client.on('guildCreate', (guild) => {
 	client.application.owner.send(`${client.application.owner} - bot just joined a new guild: **${guild.name}**`)
 })
 
+function failedMessageReplyHandler(err) {
+	let errmsg = `Failed to reply to a message in channel #${msg.channel.name}:\n${err.code}: ${err.message}`
+	// DiscordAPIError: Missing Permissions
+	if (err.code === 50013) errmsg += '\nThis is most likely caused by missing **send messages** permission.'
+	client.application.owner.send(errmsg)
+	console.log(errmsg)
+}
+
 /** @param {Discord.Message} msg */
 client.on('messageCreate', async (msg) => {
 	if (msg.author.bot) return
@@ -60,24 +68,23 @@ client.on('messageCreate', async (msg) => {
 
 		console.log(`running ocr in #${msg.channel.name}`)
 
+		let reply = await msg
+			.reply({ content: `[ processing image ]`, allowedMentions: { repliedUser: false } })
+			.catch(failedMessageReplyHandler)
+
 		/** @type {multiOcrRes} **/
 		var res = await multiOcr(attachment)
 
 		var resMsg = res.text
 		if (!resMsg) {
-			console.log('ocr failed or empty')
+			console.log('ocr empty')
+			reply.edit({ content: `[ no text found ]`, allowedMentions: { repliedUser: false } })
 			continue
 		}
 		// trim length
 		if (resMsg.length > 1950) resMsg = resMsg.substring(0, 1950)
 
-		msg.reply({ content: `\`\`\`\n${resMsg}\`\`\``, allowedMentions: { repliedUser: false } }).catch((err) => {
-			let errmsg = `Failed to reply to a message in channel #${msg.channel.name}:\n${err.code}: ${err.message}`
-			// DiscordAPIError: Missing Permissions
-			if (err.code === 50013) errmsg += '\nThis is most likely caused by missing **send messages** permission.'
-			client.application.owner.send(errmsg)
-			console.log(errmsg)
-		})
+		reply.edit({ content: `\`\`\`\n${resMsg}\`\`\``, allowedMentions: { repliedUser: false } })
 	}
 })
 
