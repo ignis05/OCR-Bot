@@ -18,7 +18,7 @@
 		"@discordjs/rest": "*",
 		"axios": "^0.21.2",
 		"discord-api-types": "^0.22.0",
-		"discord.js": "^13.1.0",
+		"discord.js": "^13.6.0",
 		"tesseract.js": "^2.1.4"
 	}
 }
