@@ -35,7 +35,9 @@ const commands = require('./commands')
 
 client.on('ready', async () => {
 	await client.application.fetch()
-	client.application.owner.send('Active and ready')
+	client.application.owner.send('Active and ready').catch((err) => {
+		console.log(`failed to send startup message to bot owner: ${err}`)
+	})
 	console.log('Ready!')
 })
 
